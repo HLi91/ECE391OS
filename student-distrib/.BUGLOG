@@ -1,0 +1,344 @@
+##########################################
+#				BUGLOG
+# For convenience, please let the log grow upward, and follows the
+# following format.
+#
+ 
+  BUG #
+  Category:
+  Description: 
+  Expectation:
+  Solution:
+ 
+# Note
+#
+##########################################
+#			BUG # NOT FIXED YET
+# NONE
+# 
+# 
+##########################################
+BUG 42
+Status: fixed
+Category: signal
+Description: handling signal returns -1 for the current system call, 
+			and results in std_in/out call spamming...
+Expectation: works as normal
+Solution: decreases user eip in syscall signal handler by 2 to reissue syscall
+
+BUG 41
+Status: fixed
+Category: signal
+Description: after integrating into the multitasking, signal breaks
+Expectation: works as before
+Solution: problem caused by user space to kernel address translation,
+		now keep consistent with the rest of the code (by changing page table
+		rather than direct translation).
+
+BUG 40
+Status: fixed
+Category: signal 
+Description: running sigtest generates segfault handler repeatedly
+Expectation: sigtest returns success after segfault handler returns
+Solution: caused by different stack setup. now changes hardware context to
+		exactly as it appears on appendix F
+
+BUG 39
+Status: fixed
+Category: signal
+Description: signal is only handled at interrupt & exception. system call
+			cannot use the same handler due to different stack set up
+Expectation: check signal both at syscall & at exception/interrupt
+Solution: set up a separate function for system call, which is essentially
+		identical to the handler for signal coming from exceptions except
+		the input format. 
+
+BUG 38
+Status: fixed
+Category: signal
+Description: signal cannot be handled when user program is stuck in std_in/out
+Expectation: signal should not wait for system call
+Solution: check signal inside system call, return fail & handle signal if
+		signal is detected
+		
+BUG 37
+Status: fixed
+Category: signal
+Description: cannot find user level esp correctly
+Expectation: CPU pushes user level esp onto the stack
+Solution: problem is caused by interrupt from kernel level (ie. system call, etc),
+		where there is no associated user level esp. Like Linux, we do nothing
+		if it comes from kernel level
+
+BUG 36
+Status: fixed
+Category: signal
+Description: kernel signal handler cannot be executed in user space
+Expectation: default handler written by us can be executed by user program
+Solution: maps the default handler to user below vidmap, using 4kb page
+
+BUG 35
+Status: fixed
+Category: system call
+Description: system call code is edited by other people, leaving a few potentially
+			bug provoking issues (see bug 9/10/11)
+Expectation: unused code should be commented out. code used to push a fake_eax
+			before pusha, and thus can recover eax after popa by writing the
+			syscall return value to the fake_eax value and pop it to eax.
+Solution: 	Leaving the fake eax is still left on stack, and comment out the part 
+			that modifies the fake_eax value (actually, this code probably modifies 
+			some other entries on the stack, although it didn't cause any error...)
+
+BUG 34
+Status: fixed
+Category: PIC
+Description: Masking IRQ 0 actually masks all others except IRQ 0
+Expectation: Mask IRQ 0 but leave others on
+Solution: fix IRQ mask function
+
+BUG 33
+Status: fixed
+Category: vidmap
+Description: fish running on other terminal flashed onto current screen
+Expectation: fish not show up if its terminal is not active
+Solution: 
+
+BUG 32
+Status: fixed
+Category: signal
+Description: fish cannot be interrupted by signal
+Expectation: fish can be terminated by sig_kill
+Solution: checks signal status in rtc_read
+
+BUG 31
+Status: fixed
+Category: scheduling
+Description: having trouble finding current & next program info
+Expectation: 
+Solution: setup new pid structure from scratch instead of using the pcb
+
+BUG 30
+Status: fixed
+Category: scheduling
+Description: ebp not updated
+Expectation: 
+Solution: update ebp to find stack
+
+BUG 29
+Status: fixed (maybe?)
+Category: synchronization (maybe?)
+Description: page fault randomly when executing program. this happens very infrequently.
+			this error cannot be reproduced.
+Expectation: nothing strange like this...
+Solution: cli/sti at various location...
+
+BUG 28
+Status: fixed
+Category: scheduling
+Description: need to distinguish between comming from syscall or user program
+Expectation: 
+Solution: separate case for each
+
+BUG 27
+Status: fixed
+Category: syscall
+Description: cat rtc does not reset rtc to 2hz
+Expectation: cat rtc should open rtc
+Solution: calling rtc_open in syscall open by using fops table
+
+BUG 26
+Status: fixed
+Category: execute
+Description: multiple shells not handled
+Expectation: handle multiple shell
+Solution: remove hard coded file location, semi-dynamically allocate
+
+BUG 25
+Status: fixed
+Category: halt
+Description: exiting shell & re-launch shell somehow cannot allow other program to run
+Expectation: program runs normally after shell relaunches
+Solution: halt did not clean up stack properly (after syscall code is modified), clean up the stack
+
+BUG 24
+Status: fixed
+Category: execute
+Description: cat non-executable page fault or general protection error
+Expectation: cat non-executable prints error messages
+Solution: release already assigned pid number if file is not executable
+
+
+BUG 23
+Status: fixed
+Category: halt
+Description: only 7 program can run from the start of system
+Expectation: 
+Solution: execute did not initialize pcb file array to 0, later program
+		inherits previous programs opened file. Initialize pcb
+
+BUG 22
+Status: fixed
+Category: syscall_wrap
+Description: iret does not work correctly
+Expectation: user programs should start 
+Solution: wrong data is pushed before calling iret, check stack for the values then fixed the pushing steps.
+
+BUG 21
+Status: fixed
+Category: system call
+Description: triple faults when trap_halt is called
+Expectation: pages used correctly freed without error
+Solution: redo the pages freeing fixed the problem 
+
+BUG 20
+Status: fixed
+Category: pid
+Description: miscalculate esp value when initializing the pids
+Expectation: all the pids should be initialized without any error
+Solution: error is caused by typo, fixing the typo
+
+BUG 19
+Status: fixed
+Category: displaying video memory
+Description: memory not shift correctly
+Expectation: memory should shift up when the screen is full
+Solution: correctly calculate the shifts needed when the screen is full
+
+BUG 18
+Status: fixed
+Category: displaying video memory
+Description: lines not showing correctly in the screen
+Expectation: lines should be correctly printed
+Solution: miscalculate positions, fixed
+
+BUG 17
+Status: fixed
+Category: line buffer
+Description: variable not defined correctly. 
+Expectation: no errors which using the variable elsewhere
+Solution: fixed by correctly using extern keyword
+
+BUG 16
+Status: fixed
+Category: kmalloc
+Description: alignment problem would cause leak of memory
+Expectation: no memory leak
+Solution: make sure alignment of the memory allocates
+
+BUG 15
+Status: fixed
+Category: interrupt init
+Description: error code not pushed correctly
+Expectation: all the errors code should be pushed so that it can find the correct handler later
+Solution: error code 0 is not pushed, fixed it by making sure code 0 is pushed
+
+BUG 14
+Status: fixed
+Category: system call
+Description: cat is not working correctly since it would stop whenever it sees a "\O" symbol
+Expectation: system call read file should read the bytes that has been passed in
+Solution: instead using printf directly, we use a for loop to call putc so that it would be stop until it prints out all the chars
+
+BUG 13
+Status: fixed
+Category: system call
+Description: the stdout_write function simply add a "\O" to the end of the command without checking the size
+Expectation: reads command without any problem
+Solution: use a new funtion which is kmalloc that is the size of command plus one so that it can correctly add "\O" to the end of the command
+
+BUG 12
+Status: fixed
+Category: vidmap
+Description: fish shows up, then gone when its suppose to change to the other frame
+Expectation: fish running as in mp1
+Solution: file system read issue.
+
+BUG 11
+Status: fixed
+Category: halt
+Description: exception when user program halts
+Expectation: program halts
+Solution: problem caused by not clean up the stack properly. cleans up mysterious
+		values pushed on to the stack somehow.
+
+BUG 10
+Status: fixed
+Category: system call
+Description: modifying the stack breaks the code somehow
+Expectation: as long I keep the input registers pushed last, and 
+			clean up after myself, changing the stack is fine
+Solution: not push fs and gs seems to work somehow
+
+BUG 9
+Status: fixed
+Category: system call
+Description: pusha/popa rewrites eax (return value)
+Expectation: leave return value in eax
+Solution: manually set up the push&pop
+
+BUG 8
+Status: fixed
+Category: execute/ iret
+Description: program out of bound after iret, and page faults
+Expectation: executes user program
+Solution: out of bound is normal, and indicates execution of user program.
+		page fault caused by system call. solved by updating TSS.esp0
+
+BUG 7
+Status: fixed
+Category: Command buffer
+Description: when the terminal switches to password mode
+             the password that has been entered would show up in history
+Expectation: history buffer should not memorize any password
+Solution: when the terminal is switched to password mode, password would write to command buffer directly so that no copies left in the history buffer
+
+BUG 6
+Status: fixed
+Category: Command buffer
+Description: When multiple tasks running on different terminal,
+             buffers would written by different terminals
+Expectation: Buffer should only be modified by its corresponding terminals
+Solution: set up different buffers for different terminals
+
+BUG 5
+Status: fixed
+Category: video_map
+Description: When multiple tasks running on different terminal,
+             video memory would write to different video memory when its terminal is not suppose to be writing to the video memory
+Expectation: Video memory would only be modified by the processes on the current terminal
+Solution: correct the video map when switch between different terminals
+         
+
+
+BUG 4
+Status: fixed
+Category: Read_Data
+Description: When length is large enough to reach the end block, 
+             return 0 even though there is data copied into buffer. 
+Expectation: always return the number of bites whenever there is data copied into buffer.
+Solution: calculate the number of bytes. 
+         revise the function read_data the code in the svn revision #16279 
+
+BUG 3
+Status: fixed
+Category: Paging
+Description: cannot access memory after paging is turned on
+Expectation: kernel keeps running, and see interrupts on screen
+Solution: Page Directory not aligned correctly (change from 4 to 4092)
+		PDE entry 0 base changed to actual start of PD from M[PD]
+	
+BUG 2
+Status: fixed
+Category: Paging
+Description: Page fault not generated when dereferencing NULL
+Expectation: see exception #14 printed onto the screen
+Solution: Paging is not enabled correctly. Corrected the assembly code
+Note: see BUG 3 for other problems in paging
+
+BUG 1
+Status: fixed
+Category: Interrupt
+Description: Both RTC & keyboard interrupt appears, but RTC	interrupt
+			disappears after keyboard interrupts.
+Expectation: RTC Interrupt should print notice on screen until QEMU closes
+Solution: send specific EOI (x60) instead of general EOI(x20) from PIC
